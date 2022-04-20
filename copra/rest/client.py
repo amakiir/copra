@@ -888,7 +888,7 @@ class Client:
             
         headers, body = await self.get('/accounts/{}/ledger'.format(account_id), 
                                        params=params, auth=True)
-        return (body, headers.get('cb-before', None), headers.get('cb-after', None))
+        return (body, headers.get('Cb-Before', None), headers.get('Cb-After', None))
 
         
     async def holds(self, account_id, limit=100, before=None, after=None):
