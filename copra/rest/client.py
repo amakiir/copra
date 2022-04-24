@@ -495,6 +495,8 @@ class Client:
     async def ticker(self, product_id):
         """Get information about the last trade for a specific product.
 
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getproductticker
+
         .. note:: Polling is discouraged in favor of connecting via the 
             websocket stream and listening for match messages.
             
@@ -524,6 +526,8 @@ class Client:
         
     async def trades(self, product_id, limit=100, before=None, after=None):
         """List the latest trades for a product.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getproducttrades
         
         The trade side indicates the maker order side. The maker order is the 
         order that was open on the order book. buy side indicates a down-tick 
@@ -590,11 +594,13 @@ class Client:
             
         headers, body = await self.get('/products/{}/trades'.format(product_id),
                                        params)
-        return (body, headers.get('cb-before', None), headers.get('cb-after', None))
+        return (body, headers.get('Cb-Before', None), headers.get('Cb-After', None))
 
         
     async def historic_rates(self, product_id, granularity=3600, start=None, end=None):
-        """Get historic rates for a product. 
+        """Get historic rates for a product.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getproductcandles
         
         Rates are returned in grouped buckets based on the requested granularity.
         
@@ -680,6 +686,8 @@ class Client:
        
     async def get_24hour_stats(self, product_id):
         """Get 24 hr stats for a product.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getproductstats
         
         :param str product_id: The product id.
         
@@ -706,6 +714,8 @@ class Client:
         
     async def currencies(self):
         """List known currencies.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getcurrencies
         
         Currency codes will conform to the ISO 4217 standard where possible. 
         Currencies which have or had no representation in ISO 4217 may use a 
@@ -719,16 +729,29 @@ class Client:
             Example::
         
                 [
-                  {
-                    "id": "BTC",
-                    "name": "Bitcoin",
-                    "min_size": "0.00000001"
-                  }, 
-                  {
-                    "id": "USD",
-                    "name": "United States Dollar",
-                    "min_size": "0.01000000"
-                  },
+                    {
+                        "id": "USD",
+                        "name": "United States Dollar",
+                        "min_size": "0.01",
+                        "max_precision": "0.01",
+                        "status": "online",
+                        "details": {
+                        "type": "fiat",
+                        "symbol": "$",
+                        "sort_order": 1,
+                        "push_payment_methods": [
+                            "bank_wire",
+                            "fedwire",
+                            "swift_bank_account",
+                            "intra_bank_account"
+                        ],
+                        "display_name": "US Dollar",
+                        "group_types": [
+                            "fiat",
+                            "usd"
+                        ]
+                        }
+                    }, 
                   ...,
                 ]
         
@@ -762,12 +785,21 @@ class Client:
         
     async def accounts(self):
         """Get a list of Coinbase Pro trading accounts.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getaccounts
         
         .. admonition:: Authorization
             :class: attention
         
             This method requires authorization. The API key must have either the 
             "view" or "trade" permission.
+        
+        .. note:: This endpoint has a custom rate limit by profile ID:
+            25 requests per second, up to 50 requests per second in bursts
+
+        .. note:: When you place an order, the funds for the order are placed on hold.
+            They cannot be used for other orders or withdrawn.
+            Funds will remain on hold until the order is filled or canceled.
         
         :returns: A list of dicts where each dict contains information about
             a trading a account.
@@ -781,7 +813,8 @@ class Client:
                     'balance': '1000.0000005931528000', 
                     'available': '1000.0000005931528', 
                     'hold': '0.0000000000000000', 
-                    'profile_id': '019be148-d490-45f9-9ead-0d1f64127716'
+                    'profile_id': '019be148-d490-45f9-9ead-0d1f64127716',
+                    "trading_enabled": true
                   },
                   ...
                 ]
@@ -796,7 +829,9 @@ class Client:
 
        
     async def account(self, account_id):
-        """Retrieve information for a single account. 
+        """Retrieve information for a single account.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getaccount
         
         .. admonition:: Authorization
             :class: attention
@@ -816,7 +851,8 @@ class Client:
                   'balance': '1000.0000005931528000', 
                   'available': '1000.0000005931528', 
                   'hold': '0.0000000000000000', 
-                  'profile_id': '019be148-d490-45f9-9ead-0d1f64127716'
+                  'profile_id': '019be148-d490-45f9-9ead-0d1f64127716',
+                  "trading_enabled": true
                 }
         
         :raises ValueError: If the client is not configured for authorization.
@@ -829,10 +865,18 @@ class Client:
 
       
     async def account_history(self, account_id, limit=100, before=None, after=None):
-        """Retrieve a list account activity.
+        """Retrieve a list of account activity.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getaccountledger
+
+        # TODO: possible additional parameters: start_date, end_date, profile_id
         
-        Account activity includes transactions that either increase or decrease 
-        the account balance. Transactions are sorted latest first.
+        Account activity includes anything that would affect the accounts
+        balance - transfers, trades, fees, etc.
+
+        List account activity of the API key's profile.
+        Account activity either increases or decreases your account balance.
+        Items are paginated and sorted latest first.
         
         .. admonition:: Authorization
             :class: attention
@@ -863,7 +907,8 @@ class Client:
             * **transfer** Funds moved to/from Coinbase to Coinbase Pro
             * **match** Funds moved as a result of a trade
             * **fee** Fee as a result of a trade
-            * **rebate** Fee rebate
+            * **rebate** Fee rebate as per our https://exchange.coinbase.com/fees
+            * **conversion** Funds converted between fiat currency and a stablecoin
             
             The details field contains type-specific details about the specific
             transaction.
@@ -871,34 +916,46 @@ class Client:
             Example::
         
                 (
-                  [
-                    {
-                      'created_at': '2018-09-28T19:31:21.211159Z', 
-                      'id': 10712040275, 
-                      'amount': '-600.9103845810000000', 
-                      'balance': '0.0000005931528000', 
-                      'type': 'match', 
-                      'details': {
-                                   'order_id': 'd2fadbb5-8769-4b80-91da-be3d9c6bd38d', 
-                                   'trade_id': '34209042', 
-                                   'product_id': 'BTC-USD'
-                                 }
-                    }, 
-                    {
-                      'created_at': '2018-09-23T23:13:45.771507Z', 
-                      'id': 1065316993, 
-                      'amount': '-170.0000000000000000', 
-                      'balance': '6.7138918107528000', 
-                      'type': 'transfer', 
-                      'details': {
-                                   'transfer_id': 'd00841ff-c572-4726-b9bf-17e783159256', 
-                                   'transfer_type': 'withdraw'
-                                 }
-                    }, 
-                    ...
-                  ],
-                  '1071064024',
-                  '1008063508'
+                    [
+                        {
+                            "created_at": "2019-06-11T22:11:56.382749Z",
+                            "id": "1444415179",
+                            "amount": "3.2200000000000000",
+                            "balance": "3.2200000000000000",
+                            "type": "transfer",
+                            "details": {
+                            "to": "6d326768-71f2-4068-99dc-7075c78f6402",
+                            "from": "20640810-6219-4d3b-95f4-5e1741dd6ea4",
+                            "profile_transfer_id": "1f854356-4923-4b10-8db1-d82f7fae8eda"
+                            }
+                        },
+                        {
+                        'created_at': '2018-09-28T19:31:21.211159Z', 
+                        'id': 10712040275, 
+                        'amount': '-600.9103845810000000', 
+                        'balance': '0.0000005931528000', 
+                        'type': 'match', 
+                        'details': {
+                                    'order_id': 'd2fadbb5-8769-4b80-91da-be3d9c6bd38d', 
+                                    'trade_id': '34209042', 
+                                    'product_id': 'BTC-USD'
+                                    }
+                        }, 
+                        {
+                        'created_at': '2018-09-23T23:13:45.771507Z', 
+                        'id': 1065316993, 
+                        'amount': '-170.0000000000000000', 
+                        'balance': '6.7138918107528000', 
+                        'type': 'transfer', 
+                        'details': {
+                                    'transfer_id': 'd00841ff-c572-4726-b9bf-17e783159256', 
+                                    'transfer_type': 'withdraw'
+                                    }
+                        }, 
+                        ...
+                    ],
+                    '1071064024',
+                    '1008063508'
                 )
         
         :raises ValueError:
@@ -925,6 +982,8 @@ class Client:
         
     async def holds(self, account_id, limit=100, before=None, after=None):
         """Get any existing holds on an account.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getaccountholds
         
         Holds are placed on an account for any active orders or pending withdraw 
         requests. As an order is filled, the hold amount is updated. If an order 
@@ -962,9 +1021,7 @@ class Client:
                   [
                     {
                       "id": "82dcd140-c3c7-4507-8de4-2c529cd1a28f",
-                      "account_id": "e0b3f39a-183d-453e-b754-0c13e5bab0b3",
                       "created_at": "2014-11-06T10:34:47.123456Z",
-                      "updated_at": "2014-11-06T10:40:47.123456Z",
                       "amount": "4.23",
                       "type": "order",
                       "ref": "0a205de4-dd35-4370-a285-fe8fc375a273",
@@ -994,7 +1051,7 @@ class Client:
             
         headers, body = await self.get('/accounts/{}/holds'.format(account_id), 
                                        params=params, auth=True)
-        return (body, headers.get('cb-before', None), headers.get('cb-after', None))
+        return (body, headers.get('Cb-Before', None), headers.get('Cb-After', None))
         
     
     async def limit_order(self, side, product_id, price, size, 
