@@ -396,7 +396,9 @@ class Client:
     async def order_book(self, product_id, level=1):
         """Get a list of open orders for a product. 
     
-        # TODO: https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getproductbook
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getproductbook
+
+        # TODO: update according to docs
         
         By default, only the inside (i.e. best) bid and ask are returned. This 
         is equivalent to a book depth of 1 level. If you would like to see a 
@@ -1060,6 +1062,8 @@ class Client:
                           stop=None, stop_price=None):
         """Place a limit order or a stop entry/loss limit order.
 
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_postorders
+
         .. admonition:: Authorization
             :class: attention
             
@@ -1110,32 +1114,34 @@ class Client:
             "Invalid stp..." even though the Coinbase API documentation claims
             the other options for stp are valid. Change this from dc at your
             own risk.
+            # TODO: still true?
             
         .. note:: To see a more detailed explanation of these parameters and to
             learn more about the order life cycle, please see the official 
-            Coinbase Pro API documentation at: https://docs.gdax.com/#channels.
+            Coinbase Pro API documentation at:
+            https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_postorders.
             
         :returns: A dict of information about the order.
         
             Example::
         
                 {
-                  'id': '97059421-3033-4cf4-99cb-925c1bf2c54f', 
-                  'price': '35.00000000', 
-                  'size': '0.00100000', 
-                  'product_id': 'BTC-USD', 
-                  'side': 'buy', 
-                  'stp': 'dc', 
-                  'type': 'limit', 
-                  'time_in_force': 'GTC', 
-                  'post_only': False, 
-                  'created_at': '2018-11-25T21:24:37.166378Z', 
-                  'fill_fees': '0.0000000000000000', 
-                  'filled_size': '0.00000000', 
-                  'executed_value': '0.0000000000000000', 
-                  'status': 'pending', 
-                  'settled': False
-                }
+                    "id": "a9625b04-fc66-4999-a876-543c3684d702",
+                    "price": "10.00000000",
+                    "size": "1.00000000",
+                    "product_id": "BTC-USD",
+                    "profile_id": "8058d771-2d88-4f0f-ab6e-299c153d4308",
+                    "side": "buy",
+                    "type": "limit",
+                    "time_in_force": "GTC",
+                    "post_only": true,
+                    "created_at": "2020-03-11T20:48:46.622052Z",
+                    "fill_fees": "0.0000000000000000",
+                    "filled_size": "0.00000000",
+                    "executed_value": "0.0000000000000000",
+                    "status": "open",
+                    "settled": false
+                    }
             
         :raises ValueError:
         
@@ -1211,6 +1217,8 @@ class Client:
                          client_oid=None, stp='dc', stop=None, stop_price=None):
         """Place a market order or a stop entry/loss market order.
         
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_postorders
+        
         .. admonition:: Authorization
             :class: attention
             
@@ -1250,30 +1258,34 @@ class Client:
             "Invalid stp..." even though the Coinbase API documentation claims
             the other options for stp are valid. Change this from dc at your
             own risk.
+            # TODO: still true?
             
         .. note:: To see a more detailed explanation of these parameters and to
             learn more about the order life cycle, please see the official 
-            Coinbase Pro API documentation at: https://docs.gdax.com/#channels.
+            Coinbase Pro API documentation at: 
+            https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_postorders.
         
         :returns: A dict of information about the order.
         
             Example::
         
                 {
-                  'id': '37e81782-cc45-4ecc-a9ff-59c327bb1d40', 
-                  'size': '0.00100000', 
-                  'product_id': 'BTC-USD', 
-                  'side': 'sell', 
-                  'stp': 'dc', 
-                  'type': 'market', 
-                  'post_only': False, 
-                  'created_at': '2018-11-25T21:28:04.788042Z', 
-                  'fill_fees': '0.0000000000000000', 
-                  'filled_size': '0.00000000', 
-                  'executed_value': '0.0000000000000000', 
-                  'status': 'pending', 
-                  'settled': False
-                }
+                    "id": "a9625b04-fc66-4999-a876-543c3684d702",
+                    "price": "10.00000000",
+                    "size": "1.00000000",
+                    "product_id": "BTC-USD",
+                    "profile_id": "8058d771-2d88-4f0f-ab6e-299c153d4308",
+                    "side": "buy",
+                    "type": "limit",
+                    "time_in_force": "GTC",
+                    "post_only": true,
+                    "created_at": "2020-03-11T20:48:46.622052Z",
+                    "fill_fees": "0.0000000000000000",
+                    "filled_size": "0.00000000",
+                    "executed_value": "0.0000000000000000",
+                    "status": "open",
+                    "settled": false
+                    }
         
         :raises ValueError:
         
@@ -1329,8 +1341,10 @@ class Client:
         return body
 
 
-    async def cancel(self, order_id):
+    async def cancel(self, order_id, product_id=None):
         """Cancel a previously placed order.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_deleteorder
 
         If the order had no matches during its lifetime its record may be 
         purged. This means the order details will not be available with 
@@ -1344,6 +1358,11 @@ class Client:
             
         :param str order_id: The id of the order to be cancelled. This is the 
             server-assigned order id and not the optional client_oid.
+            # TODO: enable passing client_oid
+
+        :param str product_id: (optional) The product the order belongs to.
+            From API docs: To prevent a race condition when canceling an order,
+            it is highly recommended that you specify the product id.
             
         :returns: A list consisting of a single string entry, the id of the 
             cancelled order.
@@ -1357,13 +1376,20 @@ class Client:
         :raises APIRequestError: Any error generated by the Coinbase Pro API 
             server.
         """
-        headers, body = await self.delete('/orders/{}'.format(order_id), auth=True)
+        params = {'product_id': product_id} if product_id else {}
+
+        headers, body = await self.delete(
+            '/orders/{}'.format(order_id),
+            params=params,
+            auth=True)
         
         return body
         
         
     async def cancel_all(self, product_id=None, stop=False):
         """Cancel "all" orders.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_deleteorders
         
         The default behavior of this method (and the underlying Coinbase API 
         method) is to cancel only *open* orders. Stop orders, once placed, have a
@@ -1403,7 +1429,15 @@ class Client:
         """
         params = {'product_id': product_id} if product_id else {}
         
-        headers, cancelled = await self.delete('/orders', params=params, auth=True)
+        # From API docs: With best effort, cancel all open orders.
+        # This may require you to make the request multiple times until all of the open orders are deleted.
+        cancelled = []
+        while True:
+            headers, _cancelled = await self.delete('/orders', params=params, auth=True)
+            if not _cancelled:
+                break
+            else:
+                cancelled += _cancelled
         
         if stop:
             orders, _, _ = await self.orders(['active', 'open', 'pending'])
@@ -1421,7 +1455,7 @@ class Client:
     
     async def orders(self, status=None, product_id=None, limit=100, before=None, 
                      after=None):
-        """Retrieve a list orders. 
+        """Retrieve a list of your orders. 
         
         The status of an order may change between the request and response
         depending on market conditions.
@@ -1437,9 +1471,9 @@ class Client:
             This method is paginated. See pagination_ for more details.
             
         :param str status: (optional) Limit list of orders to one or more of 
-            these statuses: open, pending, active or all. status may be a single 
-            string or a list of strings. i.e, ['open', 'active']. 'all' returns 
-            orders of all statuses. The default is ['open', 'active', 'pending'].
+            these statuses: open, pending, rejected, done, active, received or all.
+            status may be a single string or a list of strings. i.e, ['open', 'active'].
+            'all' returns orders of all statuses. The default is ['open', 'active', 'pending'].
         
         :param str product_id: (optional) Filter orders by product_id
         
@@ -1450,7 +1484,9 @@ class Client:
             None.
         
         :param int after: (optional) The after cursor value. The default is 
-            None. 
+            None.
+
+        # TODO: possible additional parameters: profile_id, sorted_by, sorting, start_date, end_date
             
         :returns: A 3-tuple: (orders, before cursor, after cursor)
             
@@ -1464,6 +1500,7 @@ class Client:
                     "price": "0.10000000",
                     "size": "0.01000000",
                     "product_id": "BTC-USD",
+                    "profile_id": "8058d771-2d88-4f0f-ab6e-299c153d4308",
                     "side": "buy",
                     "stp": "dc",
                     "type": "limit",
@@ -1481,6 +1518,7 @@ class Client:
                     "price": "1.00000000",
                     "size": "1.00000000",
                     "product_id": "BTC-USD",
+                    "profile_id": "8058d771-2d88-4f0f-ab6e-299c153d4308",
                     "side": "buy",
                     "stp": "dc",
                     "type": "limit",
@@ -1521,7 +1559,7 @@ class Client:
                 status = [status]
                 
             for value in status:
-                if value not in ('active', 'all', 'open', 'pending', 'done'):
+                if value not in ('open', 'pending', 'rejected', 'done', 'active', 'received', 'all'):
                     raise ValueError("Invalid status: {}".format(value))
                
             params.update([('status', value) for value in status])
@@ -1531,11 +1569,13 @@ class Client:
                     
         headers, body = await self.get('/orders', params=params, auth=True)
         
-        return (body, headers.get('cb-before', None), headers.get('cb-after', None))
+        return (body, headers.get('Cb-Before', None), headers.get('Cb-After', None))
         
         
     async def get_order(self, order_id):
         """Get a single order by order id.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getorder
 
         .. admonition:: Authorization
             :class: attention
@@ -1544,29 +1584,28 @@ class Client:
             "view" or "trade" permission.
             
         :param str order_id: The order id.
+            # TODO: enable passing client_oid
         
         :returns: A dict of information about the order.
         
             Example::
         
                 {
-                  "id": "68e6a28f-ae28-4788-8d4f-5ab4e5e5ae08",
-                  "size": "1.00000000",
-                  "product_id": "BTC-USD",
-                  "side": "buy",
-                  "stp": "dc",
-                  "funds": "9.9750623400000000",
-                  "specified_funds": "10.0000000000000000",
-                  "type": "market",
-                  "post_only": false,
-                  "created_at": "2016-12-08T20:09:05.508883Z",
-                  "done_at": "2016-12-08T20:09:05.527Z",
-                  "done_reason": "filled",
-                  "fill_fees": "0.0249376391550000",
-                  "filled_size": "0.01291771",
-                  "executed_value": "9.9750556620000000",
-                  "status": "done",
-                  "settled": true
+                    "id": "a9625b04-fc66-4999-a876-543c3684d702",
+                    "price": "10.00000000",
+                    "size": "1.00000000",
+                    "product_id": "BTC-USD",
+                    "profile_id": "8058d771-2d88-4f0f-ab6e-299c153d4308",
+                    "side": "buy",
+                    "type": "limit",
+                    "time_in_force": "GTC",
+                    "post_only": true,
+                    "created_at": "2020-03-11T20:48:46.622052Z",
+                    "fill_fees": "0.0000000000000000",
+                    "filled_size": "0.00000000",
+                    "executed_value": "0.0000000000000000",
+                    "status": "open",
+                    "settled": false
                 }
                 
         .. note:: Open orders may change state between the request and the 
@@ -1586,6 +1625,8 @@ class Client:
                     after=None):
         """Get a list of recent fills.
 
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getfills
+
         .. admonition:: Authorization
             :class: attention
             
@@ -1601,6 +1642,8 @@ class Client:
         
         :param str product_id: (optional) Limit list of fills to this 
             product_id. Either this or order_id must be defined.
+
+        # TODO: possible additonal parameters: product_id
         
         :param int limit: (optional) The number of results to be returned per 
             request. The default (and maximum) value is 100.
@@ -1618,19 +1661,22 @@ class Client:
             Example::
         
                 [
-                  {
-                    "trade_id": 74, 
+                    {
+                    "created_at": "2019-11-21T01:38:23.878Z",
+                    "trade_id": 78098253,
                     "product_id": "BTC-USD",
-                    "price": "10.00",
-                    "size": "0.01",
-                    "order_id": "d50ec984-77a8-460a-b958-66f114b0de9b",
-                    "created_at": "2014-11-07T22:19:28.578544Z",
+                    "order_id": "41473628-db2c-464e-b9f4-82df7e4fb4f4",
+                    "user_id": "5cf6e115aaf44503db300f1e",
+                    "profile_id": "8058d771-2d88-4f0f-ab6e-299c153d4308",
                     "liquidity": "T",
-                    "fee": "0.00025",
+                    "price": "8087.38000000",
+                    "size": "0.00601800",
+                    "fee": "0.2433492642000000",
+                    "side": "sell",
                     "settled": true,
-                    "side": "buy"
-                  },
-                  ...,
+                    "usd_volume": "48.6698528400000000"
+                    }
+                    ...,
                 ]
         
         :raises ValueError:
@@ -1663,11 +1709,13 @@ class Client:
             
         headers, body = await self.get('/fills', params=params, auth=True)
     
-        return (body, headers.get('cb-before', None), headers.get('cb-after', None))
+        return (body, headers.get('Cb-Before', None), headers.get('Cb-After', None))
         
         
     async def payment_methods(self):
         """Get a list of the payment methods you have on file.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getpaymentmethods
 
         .. admonition:: Authorization
             :class: attention
@@ -1678,6 +1726,7 @@ class Client:
         :returns: A list of dicts where each dict contains detailed information
             about a payment method the account has available.
             
+            # TODO: verify if example is up to date
             Example::
         
                 [
@@ -1756,10 +1805,12 @@ class Client:
         """
         headers, body = await self.get('/payment-methods', auth=True)
         return body
-        
+
     
     async def coinbase_accounts(self):
         """Get a list of your coinbase accounts.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getcoinbaseaccounts
 
         .. admonition:: Authorization
             :class: attention 
@@ -1827,7 +1878,9 @@ class Client:
         
     
     async def deposit_payment_method(self, amount, currency, payment_method_id):
-        """Deposit funds from a payment method on file.
+        """Deposit funds from a payment method on file to the specified profile_id.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_postdepositpaymentmethod
         
         To get a list of available payment methods, use 
         :meth:`copra.rest.Client.payment_methods`.
@@ -1845,6 +1898,8 @@ class Client:
             etc.
         
         :param str payment_method_id: The id of the payment method to use. 
+
+        # TODO: add profile_id parameter
             
         :returns: A dict with a deposit id, timestamp and other deposit 
             information.
@@ -1872,7 +1927,9 @@ class Client:
         
         
     async def deposit_coinbase(self, amount, currency, coinbase_account_id):
-        """Deposit funds from a Coinbase account.
+        """Deposit funds from a Coinbase account to the specified profile_id.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_postdepositcoinbaseaccount
 
         .. admonition:: Authorization
             :class: attention
@@ -1889,6 +1946,8 @@ class Client:
         :param str coinbase_account_id:  The id of the Coinbase account to
             deposit from. To get a list of Coinbase accounts, use:
             :meth:`copra.rest.Client.coinbase_accounts`.
+
+        # TODO: add profile_id parameter
         
         :returns: A dict with a deposit id and confirmation of the deposit 
             amount and currency.
@@ -1915,7 +1974,9 @@ class Client:
         
         
     async def withdraw_payment_method(self, amount, currency, payment_method_id):
-        """Withdraw funds to a payment method on file.
+        """Withdraw funds from a specified profile_id to a payment method on file.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_postwithdrawpaymentmethod
         
         To get a list of available payment methods, use 
         :meth:`copra.rest.Client.payment_methods`.
@@ -1933,7 +1994,9 @@ class Client:
             etc.
         
         :param str payment_method_id: The id of the payment method on file to
-            use. 
+            use.
+        
+        # TODO: add profile_id parameter
             
         :returns: A dict with a withdrawal id, timestamp, and other withdrawal 
             information.
@@ -1961,7 +2024,9 @@ class Client:
 
         
     async def withdraw_coinbase(self, amount, currency, coinbase_account_id):
-        """Withdraw funds to a coinbase account.
+        """Withdraw funds from the specified profile_id to a coinbase account.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_postwithdrawcoinbaseaccount
 
         .. admonition:: Authorization
             :class: attention
@@ -1978,6 +2043,8 @@ class Client:
         :param str coinbase_account_id:  The id of the Coinbase account to
             withdraw to. To get a list of Coinbase accounts, use:
             :meth:`copra.rest.Client.coinbase_accounts`.
+
+        # TODO: add profile_id parameter
         
         :returns: A dict with the withdrawal id, and confirmation of the 
             withdrawl amount and currency.
@@ -2004,7 +2071,9 @@ class Client:
         
         
     async def withdraw_crypto(self, amount, currency, crypto_address):
-        """Withdraw funds to a crypto address.
+        """Withdraw funds from the specified profile_id to a crypto address.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_postwithdrawcrypto
         
         .. admonition:: Authorization
             :class: attention
@@ -2020,6 +2089,8 @@ class Client:
             
         :param str crypto_address: The crypto address of the recipient.
         
+        # TODO: add profile_id parameter, destination_tag, no_destination_tag, two_factor_code, nonce, fee
+
         :returns: A dict with the withrawal id and confirmation of the withdrawl 
             amount and currency.
         
@@ -2046,6 +2117,8 @@ class Client:
         
     async def stablecoin_conversion(self, from_currency_id, to_currency_id, amount):
         """Convert to and from a stablecoin.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_postconversion
         
         .. admonition:: Authorization
             :class: attention
@@ -2055,6 +2128,7 @@ class Client:
         
         .. note:: As of November, 1018, Coinbase Pro only supports USD-USDC 
             conversions
+            # TODO: verify
         
         :param str from_currency_id: The id of the currency to convert from.
         
@@ -2063,6 +2137,8 @@ class Client:
         :param float amount: The amount of currency to convert. This 
             paramater may also be a string to avoid floating point issues.
         
+        # TODO: add profile_id, nonce
+
         :returns: A dict summarizing the conversion.
         
             Example::
@@ -2091,6 +2167,8 @@ class Client:
         
     async def fees(self):
         """Get your current maker & taker fee rates and 30-day trailing volume.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getfees
         
         .. note:: Quoted rates are subject to change. More information on fees 
             can found at: https://support.pro.coinbase.com/customer/en/portal/articles/2945310-fees.
@@ -2117,6 +2195,8 @@ class Client:
                             product_id='', account_id='', report_format='pdf',
                             email=''):
         """Create a report about your account history.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_postreports
         
         Reports provide batches of historic information about your account in 
         various human and machine readable forms.
@@ -2137,8 +2217,10 @@ class Client:
             "view" or "trade" permission.
             
         :param str report_type: The type of report to generate. This must be
-            either "fills" or "account".
+            either one of  ["fills", "account", "otc_fills", "type_1099k_transaction_history", "tax_invoice"]
             
+        # TODO: add profile_id and year    
+    
         :param str start_date: The starting date of the requested report as a 
             str in ISO 8601 format.
             
@@ -2224,6 +2306,8 @@ class Client:
         
     async def report_status(self, report_id):
         """Get the status of a report.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getreport
         
         Once a report request has been accepted for processing, the status is 
         available by polling the report resource endpoint.
@@ -2293,6 +2377,8 @@ class Client:
         
     async def trailing_volume(self):
         """Return your 30-day trailing volume for all products.
+
+        # FIXME: Endpoint does not exist anymore. Maybe reimplement another way?
         
         This is a cached value that’s calculated every day at midnight UTC.
          
