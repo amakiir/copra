@@ -1455,7 +1455,9 @@ class Client:
     
     async def orders(self, status=None, product_id=None, limit=100, before=None, 
                      after=None):
-        """Retrieve a list of your orders. 
+        """Retrieve a list of your orders.
+
+        https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getorders
         
         The status of an order may change between the request and response
         depending on market conditions.
